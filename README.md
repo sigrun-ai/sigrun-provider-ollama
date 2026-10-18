@@ -17,7 +17,10 @@ the provider into its `Models` store at boot.
 - **Readiness** (`not_configured` / `degraded` / `ready`, surfaced on
   sigrun's `/v1/auth/check`) — seeded from credential resolution and
   updated per refresh outcome; state transitions log via `console.warn`
-  (transitions only, never per failure).
+  (transitions only, never per failure). On the first configured boot
+  the provider announces `startup → ready` at credential *resolution* —
+  before any refresh has run (`ready` there means "credential resolved,
+  refresh not yet attempted", not "catalog verified").
 - **Health** — `degraded` only when the provider is configured and its
   last refresh failed; an unconfigured optional plugin reports `ok`.
 
@@ -44,10 +47,12 @@ catalog and records a per-provider error.
 ## Install
 
 ```jsonc
-// settings.json (sigrun config dir)
+// settings.json (sigrun config dir) — the UNIFIED extensions list:
+// install + load in one place; npm and git specifiers are the same list
+// ("sigrun-ollama@range", "git:github.com/sigrun-ai/sigrun-ollama", an
+// https git URL with an optional @ref, or this file: form).
 {
-	"packages": ["file:/path/to/sigrun-ollama"],  // or a git/npm specifier
-	"extensions": ["sigrun-ollama"]
+	"extensions": ["file:/path/to/sigrun-ollama"]
 }
 ```
 
