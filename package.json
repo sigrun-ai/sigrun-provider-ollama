@@ -1,0 +1,42 @@
+{
+	"name": "sigrun-ollama",
+	"version": "0.1.0",
+	"description": "Reference sigrun provider plugin: Ollama Cloud (OpenAI-compatible /v1) as a dynamic provider",
+	"type": "module",
+	"engines": {
+		"node": ">=22.19.0"
+	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit",
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "npm run build"
+	},
+	"devDependencies": {
+		"@earendil-works/pi-ai": "^1.0.4",
+		"@earendil-works/pi-durable": "1.2.0",
+		"@types/node": "^26.6.4",
+		"typescript": "^7.0.2",
+		"vitest": "^5.0.3"
+	},
+	"license": "MIT",
+	"repository": {
+		"type": "github",
+		"url": "git+https://github.com/sigrun-ai/sigrun-ollama.git"
+	},
+	"bugs": {
+		"url": "https://github.com/sigrun-ai/sigrun-ollama/issues"
+	},
+	"homepage": "https://github.com/sigrun-ai/sigrun-ollama#readme"
+}
