@@ -21,7 +21,11 @@ import { createProvider } from "@earendil-works/pi-ai/models";
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 /** The provider id models are registered (and stamped) under. */
 export const OLLAMA_PROVIDER_ID = "ollama";
-/** Ollama Cloud's OpenAI-compatible endpoint. */
+/**
+ * Ollama Cloud's OpenAI-compatible endpoint. The operator can override
+ * per deployment via the plugin's scoped settings (`baseUrl`) — see
+ * {@link resolveOllamaBaseUrl}.
+ */
 export const OLLAMA_BASE_URL = "https://ollama.com/v1";
 /** Ambient fallback when auth.json holds no credential. */
 export const OLLAMA_API_KEY_ENV = "OLLAMA_API_KEY";
@@ -202,15 +206,35 @@ export function createOllamaPlugin(baseUrl = OLLAMA_BASE_URL) {
     };
 }
 /**
+ * Resolve the plugin's base URL from its scoped settings: `baseUrl`
+ * (string) overrides the {@link OLLAMA_BASE_URL} constant. Absent → the
+ * constant; present-but-not-a-non-empty-string → throw (a malformed
+ * override must quarantine loudly, not silently fall back to a possibly
+ * wrong constant).
+ */
+export function resolveOllamaBaseUrl(settings) {
+    if (!("baseUrl" in settings))
+        return OLLAMA_BASE_URL;
+    const value = settings.baseUrl;
+    if (typeof value !== "string" || value.trim().length === 0) {
+        throw new Error("sigrun-ollama: settings/sigrun-ollama.json baseUrl must be a non-empty string when present");
+    }
+    return value.trim();
+}
+/**
  * The sigrun extension-package factory (provider-only contributor).
  * Arity 1 declares the host-taking signature — sigrun's loader passes the
- * seam host only to factories that declare one (`factory.length > 0`).
- * sigrun-ollama reads no scoped settings (fixed endpoint, ambient-keyed
- * auth), so the host is accepted for the reference shape and left unused;
- * plugins that do read settings await `host.stores.settings.get()` here.
+ * seam host only to factories that declare one (`factory.length > 0`) —
+ * and the factory is ASYNC because the scoped settings store is
+ * async-only; sigrun's loader awaits factory results. The base URL is
+ * deployment-configurable through the scoped settings (`baseUrl` in
+ * `settings/sigrun-ollama.json`, constant fallback): deployments behind a
+ * proxy or mirror — and hermetic test fixtures — redirect the endpoint
+ * that way (restart-required, exactly like sigrun-pareto/sigrun-bifrost).
  */
-export default function sigrunOllama(host) {
-    const plugin = createOllamaPlugin();
+export default async function sigrunOllama(host) {
+    const settings = await host.stores.settings.get();
+    const plugin = createOllamaPlugin(resolveOllamaBaseUrl(settings));
     return {
         name: "sigrun-ollama",
         providers: [{ provider: plugin.provider, readiness: plugin.readiness }],

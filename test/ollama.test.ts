@@ -21,8 +21,10 @@ import type {
 import sigrunOllama, {
 	createOllamaPlugin,
 	OLLAMA_API_KEY_ENV,
+	OLLAMA_BASE_URL,
 	OLLAMA_PROVIDER_ID,
 	parseOllamaCatalog,
+	resolveOllamaBaseUrl,
 	type SigrunPluginHost,
 } from "../src/index.js";
 
@@ -99,6 +101,20 @@ function authContext(env: Record<string, string> = {}): AuthContext {
 	};
 }
 
+/** The seam-host slice, scoped to whatever settings the test wants. */
+function host(settings: Record<string, unknown> = {}): SigrunPluginHost {
+	return {
+		stores: {
+			settings: {
+				get: async () => settings,
+				set: async () => {
+					throw new Error("unexpected settings write in tests");
+				},
+			},
+		},
+	};
+}
+
 function models(
 	key: string | undefined,
 	env: Record<string, string> = {},
@@ -112,8 +128,8 @@ function models(
 }
 
 describe("the factory contract", () => {
-	it("returns a provider-only contributor with an empty baseline catalog", () => {
-		const result = sigrunOllama(undefined as unknown as SigrunPluginHost);
+	it("returns a provider-only contributor with an empty baseline catalog", async () => {
+		const result = await sigrunOllama(host());
 		expect(result.name).toBe("sigrun-ollama");
 		// Provider-only: no extension field (the loader's Task 1 pathway).
 		expect("extension" in result).toBe(false);
@@ -129,6 +145,42 @@ describe("the factory contract", () => {
 		// Arity 1: the host-taking signature (the loader's factory.length
 		// gate passes the seam host only to factories that declare it).
 		expect(sigrunOllama.length).toBe(1);
+	});
+});
+
+describe("the scoped-settings base URL", () => {
+	it("overrides the constant end to end (trimmed), absent settings fall back", async () => {
+		serveCatalog();
+		// Whitespace around the URL proves the trim.
+		const result = await sigrunOllama(host({ baseUrl: `  ${baseUrl}  ` }));
+		const store = createModels({
+			credentials: credentialStore("bridged-key"),
+			authContext: authContext({}),
+		});
+		store.setProvider(result.providers[0]!.provider);
+		const refresh = await store.refresh({ force: true });
+		expect(refresh.errors.size).toBe(0);
+		// The override drove the fixture server, and the catalog is
+		// stamped with the (trimmed) overridden base.
+		expect(requests).toHaveLength(1);
+		expect(requests[0]!.path).toBe("/v1/models");
+		const catalog = store.getModels(OLLAMA_PROVIDER_ID);
+		expect(catalog.map((model) => model.id)).toEqual([
+			"acme-mini",
+			"acme-large",
+		]);
+		expect(catalog.every((model) => model.baseUrl === baseUrl)).toBe(true);
+	});
+
+	it("resolves: absent → constant, valid → trimmed, malformed → throws", () => {
+		expect(resolveOllamaBaseUrl({})).toBe(OLLAMA_BASE_URL);
+		expect(resolveOllamaBaseUrl({ other: true })).toBe(OLLAMA_BASE_URL);
+		expect(resolveOllamaBaseUrl({ baseUrl: `  ${baseUrl} ` })).toBe(baseUrl);
+		expect(() => resolveOllamaBaseUrl({ baseUrl: "" })).toThrow(/baseUrl/);
+		expect(() => resolveOllamaBaseUrl({ baseUrl: "   " })).toThrow(/baseUrl/);
+		expect(() => resolveOllamaBaseUrl({ baseUrl: 42 })).toThrow(/baseUrl/);
+		// A malformed override quarantines the factory loudly rather than
+		// silently falling back to the constant.
 	});
 });
 

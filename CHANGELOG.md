@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Deployment-configurable base URL: the (now async) factory reads
+  `baseUrl` from the plugin's scoped settings
+  (`settings/sigrun-ollama.json`) with the constant as fallback; a
+  malformed override fails the factory loudly instead of silently
+  falling back (mirrors sigrun-pareto; restart-required).
 
 ## [0.1.0] - 2026-10-18
 ### Added
