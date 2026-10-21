@@ -130,7 +130,7 @@ function models(
 describe("the factory contract", () => {
 	it("returns a provider-only contributor with an empty baseline catalog", async () => {
 		const result = await sigrunOllama(host());
-		expect(result.name).toBe("sigrun-ollama");
+		expect(result.name).toBe("provider-ollama");
 		// Provider-only: no extension field (the loader's Task 1 pathway).
 		expect("extension" in result).toBe(false);
 		expect(result.providers).toHaveLength(1);

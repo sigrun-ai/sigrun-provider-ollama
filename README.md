@@ -1,4 +1,4 @@
-# sigrun-ollama
+# @sigrun/provider-ollama
 
 The reference [sigrun](https://github.com/sigrun-ai/sigrun) provider
 plugin: [Ollama Cloud](https://ollama.com) (`https://ollama.com/v1`,
@@ -7,7 +7,7 @@ OpenAI-compatible) as one dynamic chat provider.
 ## What it contributes
 
 A **provider-only contributor** — the default export is a factory
-returning `{ name: "sigrun-ollama", providers: [{ provider, readiness }],
+returning `{ name: "provider-ollama", providers: [{ provider, readiness }],
 health }` with no pi-durable extension surface. Sigrun's loader merges
 the provider into its `Models` store at boot.
 

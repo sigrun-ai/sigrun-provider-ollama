@@ -1,5 +1,5 @@
 /**
- * sigrun-ollama — the reference sigrun provider plugin (provider plugins
+ * @sigrun/provider-ollama — the reference sigrun provider plugin (provider plugins
  * Task 7): Ollama Cloud (`https://ollama.com/v1`) as one dynamic
  * OpenAI-compatible provider.
  *
@@ -104,7 +104,7 @@ export declare function resolveOllamaBaseUrl(settings: Record<string, unknown>):
  * and the factory is ASYNC because the scoped settings store is
  * async-only; sigrun's loader awaits factory results. The base URL is
  * deployment-configurable through the scoped settings (`baseUrl` in
- * `settings/sigrun-ollama.json`, constant fallback): deployments behind a
+ * `settings/provider-ollama.json`, constant fallback): deployments behind a
  * proxy or mirror — and hermetic test fixtures — redirect the endpoint
  * that way (restart-required, exactly like sigrun-pareto/sigrun-bifrost).
  */

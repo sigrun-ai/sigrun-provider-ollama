@@ -1,5 +1,5 @@
 /**
- * sigrun-ollama — the reference sigrun provider plugin (provider plugins
+ * @sigrun/provider-ollama — the reference sigrun provider plugin (provider plugins
  * Task 7): Ollama Cloud (`https://ollama.com/v1`) as one dynamic
  * OpenAI-compatible provider.
  *
@@ -163,7 +163,7 @@ export function createOllamaPlugin(baseUrl: string = OLLAMA_BASE_URL): OllamaPlu
 		const next = status();
 		if (next === lastAnnounced) return;
 		console.warn(
-			`sigrun-ollama: ollama ${lastAnnounced ?? "startup"} → ${next}` +
+			`provider-ollama: ollama ${lastAnnounced ?? "startup"} → ${next}` +
 				(lastRefreshDetail !== undefined && next === "degraded"
 					? ` (${lastRefreshDetail})`
 					: ""),
@@ -230,7 +230,7 @@ export function createOllamaPlugin(baseUrl: string = OLLAMA_BASE_URL): OllamaPlu
 				// persists whatever fetchModels returns; an empty array
 				// would wipe the catalog.
 				throw new Error(
-					`sigrun-ollama: Ollama Cloud is not configured ` +
+					`provider-ollama: Ollama Cloud is not configured ` +
 						`(no auth.json credential and no ${OLLAMA_API_KEY_ENV}); ` +
 						"refusing to publish an empty catalog",
 				);
@@ -260,7 +260,7 @@ export function createOllamaPlugin(baseUrl: string = OLLAMA_BASE_URL): OllamaPlu
 				const message = cause instanceof Error ? cause.message : String(cause);
 				noteRefresh(false, message);
 				throw new Error(
-					`sigrun-ollama: Ollama Cloud catalog refresh failed: ${message}`,
+					`provider-ollama: Ollama Cloud catalog refresh failed: ${message}`,
 				);
 			}
 		},
@@ -295,7 +295,7 @@ export function resolveOllamaBaseUrl(
 	const value = settings.baseUrl;
 	if (typeof value !== "string" || value.trim().length === 0) {
 		throw new Error(
-			"sigrun-ollama: settings/sigrun-ollama.json baseUrl must be a non-empty string when present",
+			"provider-ollama: settings/provider-ollama.json baseUrl must be a non-empty string when present",
 		);
 	}
 	return value.trim();
@@ -308,7 +308,7 @@ export function resolveOllamaBaseUrl(
  * and the factory is ASYNC because the scoped settings store is
  * async-only; sigrun's loader awaits factory results. The base URL is
  * deployment-configurable through the scoped settings (`baseUrl` in
- * `settings/sigrun-ollama.json`, constant fallback): deployments behind a
+ * `settings/provider-ollama.json`, constant fallback): deployments behind a
  * proxy or mirror — and hermetic test fixtures — redirect the endpoint
  * that way (restart-required, exactly like sigrun-pareto/sigrun-bifrost).
  */
@@ -318,7 +318,7 @@ export default async function sigrunOllama(
 	const settings = await host.stores.settings.get();
 	const plugin = createOllamaPlugin(resolveOllamaBaseUrl(settings));
 	return {
-		name: "sigrun-ollama",
+		name: "provider-ollama",
 		providers: [{ provider: plugin.provider, readiness: plugin.readiness }],
 		health: plugin.health,
 	};
