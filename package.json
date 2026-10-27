@@ -1,6 +1,6 @@
 {
 	"name": "@sigrun/provider-ollama",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Reference sigrun provider plugin: Ollama Cloud (OpenAI-compatible /v1) as a dynamic provider",
 	"type": "module",
 	"engines": {
