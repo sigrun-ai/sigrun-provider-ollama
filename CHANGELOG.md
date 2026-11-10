@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   model at construction), exactly as before.
 - POSTURE CHANGE: a malformed `baseUrl` no longer quarantines the plugin. The
   deleted parser THREW (the whole provider failed to load on a typo); core now
-  repairs the value away — one boot-time warning plus one admin notice — and the
+  repairs the value away — one boot-time warning — and the
   plugin boots on `https://ollama.com/v1`. The form refuses a malformed value at
   save (`format: "uri"`), so only a hand-edited file reaches the repair path.
 - `baseUrl` is strict about scheme and whitespace: a value that is not a URI

@@ -7,7 +7,7 @@
  *
  * THE POSTURE CHANGE. The deleted `resolveOllamaBaseUrl` THREW on a malformed
  * `baseUrl`, quarantining the whole plugin on a typo. Core's checked read now
- * repairs the value to its default (a logged repair plus one admin notice), so
+ * repairs the value to its default (one logged boot-time warning), so
  * the plugin boots on {@link OLLAMA_BASE_URL} instead. The form refuses a
  * malformed value at save (`format: "uri"`), so only a hand-edited file can
  * reach the repair path.

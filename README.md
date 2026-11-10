@@ -52,7 +52,7 @@ page says so).
 
 A malformed value (not an absolute URI — including one padded with spaces,
 which the earlier parser silently trimmed) is repaired to the default at
-load: sigrun logs a warning and posts one admin notice, and the plugin boots
+load: sigrun logs one boot-time warning, and the plugin boots
 on `https://ollama.com/v1`. The form refuses a malformed value at save.
 Earlier releases QUARANTINED the plugin on a malformed value instead.
 
