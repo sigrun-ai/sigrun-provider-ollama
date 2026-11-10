@@ -24,9 +24,9 @@ import sigrunOllama, {
 	OLLAMA_BASE_URL,
 	OLLAMA_PROVIDER_ID,
 	parseOllamaCatalog,
-	resolveOllamaBaseUrl,
 	type SigrunPluginHost,
 } from "../src/index.js";
+import { createFakeHost } from "./fake-host.js";
 
 /** The OpenAI-compatible `[OI]` `/models` list shape Ollama Cloud serves. */
 const CATALOG_BODY = {
@@ -101,18 +101,9 @@ function authContext(env: Record<string, string> = {}): AuthContext {
 	};
 }
 
-/** The seam-host slice, scoped to whatever settings the test wants. */
+/** The seam-host slice: a declaring host over `settings` (in-memory). */
 function host(settings: Record<string, unknown> = {}): SigrunPluginHost {
-	return {
-		stores: {
-			settings: {
-				get: async () => settings,
-				set: async () => {
-					throw new Error("unexpected settings write in tests");
-				},
-			},
-		},
-	};
+	return createFakeHost(settings).host;
 }
 
 function models(
@@ -149,10 +140,9 @@ describe("the factory contract", () => {
 });
 
 describe("the scoped-settings base URL", () => {
-	it("overrides the constant end to end (trimmed), absent settings fall back", async () => {
+	it("overrides the constant end to end, absent settings fall back", async () => {
 		serveCatalog();
-		// Whitespace around the URL proves the trim.
-		const result = await sigrunOllama(host({ baseUrl: `  ${baseUrl}  ` }));
+		const result = await sigrunOllama(host({ baseUrl }));
 		const store = createModels({
 			credentials: credentialStore("bridged-key"),
 			authContext: authContext({}),
@@ -161,7 +151,7 @@ describe("the scoped-settings base URL", () => {
 		const refresh = await store.refresh({ force: true });
 		expect(refresh.errors.size).toBe(0);
 		// The override drove the fixture server, and the catalog is
-		// stamped with the (trimmed) overridden base.
+		// stamped with the overridden base.
 		expect(requests).toHaveLength(1);
 		expect(requests[0]!.path).toBe("/v1/models");
 		const catalog = store.getModels(OLLAMA_PROVIDER_ID);
@@ -172,15 +162,15 @@ describe("the scoped-settings base URL", () => {
 		expect(catalog.every((model) => model.baseUrl === baseUrl)).toBe(true);
 	});
 
-	it("resolves: absent → constant, valid → trimmed, malformed → throws", () => {
-		expect(resolveOllamaBaseUrl({})).toBe(OLLAMA_BASE_URL);
-		expect(resolveOllamaBaseUrl({ other: true })).toBe(OLLAMA_BASE_URL);
-		expect(resolveOllamaBaseUrl({ baseUrl: `  ${baseUrl} ` })).toBe(baseUrl);
-		expect(() => resolveOllamaBaseUrl({ baseUrl: "" })).toThrow(/baseUrl/);
-		expect(() => resolveOllamaBaseUrl({ baseUrl: "   " })).toThrow(/baseUrl/);
-		expect(() => resolveOllamaBaseUrl({ baseUrl: 42 })).toThrow(/baseUrl/);
-		// A malformed override quarantines the factory loudly rather than
-		// silently falling back to the constant.
+	it("never quarantines the factory on a malformed baseUrl", async () => {
+		// The deleted resolver threw on every one of these, quarantining the
+		// whole plugin; the declared schema repairs the value away and the
+		// plugin boots on the constant (the posture change, asserted in detail
+		// by `settings-schema.test.ts`).
+		for (const malformed of ["", "   ", 42, "not a url"]) {
+			const result = await sigrunOllama(host({ baseUrl: malformed }));
+			expect(result.providers[0]!.provider.baseUrl).toBe(OLLAMA_BASE_URL);
+		}
 	});
 });
 
