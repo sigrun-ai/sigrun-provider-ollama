@@ -34,8 +34,27 @@ the ambient environment:
 2. `OLLAMA_API_KEY`.
 
 The plugin never reads auth.json or `process.env` itself. Rotating the
-key applies on the next resolution — no restart needed (there are no
-plugin settings; the endpoint is fixed).
+key applies on the next resolution — no restart needed.
+
+## Settings
+
+The plugin's settings page is a generated form (the schema is its whole
+contract — `src/settings-schema.ts`). One key:
+
+| Key | Type | Default |
+| --- | --- | --- |
+| `baseUrl` | URI string | `https://ollama.com/v1` |
+
+`baseUrl` points the plugin at a proxy or mirror of the cloud endpoint;
+the catalog is fetched from `<baseUrl>/models`. It is read ONCE, when the
+extension loads, so an edited value applies at the next restart (the
+page says so).
+
+A malformed value (not an absolute URI — including one padded with spaces,
+which the earlier parser silently trimmed) is repaired to the default at
+load: sigrun logs one boot-time warning, and the plugin boots
+on `https://ollama.com/v1`. The form refuses a malformed value at save.
+Earlier releases QUARANTINED the plugin on a malformed value instead.
 
 ## Failure semantics
 

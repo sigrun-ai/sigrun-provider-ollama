@@ -16,33 +16,40 @@
  * devDependencies only, because sigrun (the host) ships them and
  * `syncPackages` installs with `--omit=dev` — the provider-plugins spec's
  * dependency posture.
+ *
+ * Settings are declared as JSON Schema (`src/settings-schema.ts`) and read
+ * through the declared handle, so core owns the settings page's form, the
+ * defaults and the malformed-value repair for the one key this plugin has
+ * (`baseUrl`). The declared name and the package name are the same string,
+ * so the loader's provisional slug equals the final slug (`provider-ollama`)
+ * and a factory-time read through the handle resolves the file the settings
+ * page writes. It reads once, because the URL is baked into every model the
+ * provider publishes (`restart`).
  */
 import { type Provider } from "@earendil-works/pi-ai/models";
 import type { Model } from "@earendil-works/pi-ai";
+import type { DeclaredSettings, SettingsDeclaration } from "@sigrun/sigrun/extension";
 /** The provider id models are registered (and stamped) under. */
 export declare const OLLAMA_PROVIDER_ID = "ollama";
-/**
- * Ollama Cloud's OpenAI-compatible endpoint. The operator can override
- * per deployment via the plugin's scoped settings (`baseUrl`) — see
- * {@link resolveOllamaBaseUrl}.
- */
-export declare const OLLAMA_BASE_URL = "https://ollama.com/v1";
 /** Ambient fallback when auth.json holds no credential. */
 export declare const OLLAMA_API_KEY_ENV = "OLLAMA_API_KEY";
+export { OLLAMA_BASE_URL, OLLAMA_SETTINGS_SCHEMA } from "./settings-schema.js";
+export type { OllamaProviderSettings } from "./settings-schema.js";
 /**
  * Structural slice of sigrun's seam host (src/harness/seam-host.ts) a
- * provider plugin may consume. Declared here — structurally, like the
- * bridge's pi-ai re-declarations — because the plugin cannot import
- * sigrun core. The scoped settings store is async-only, which is why the
+ * provider plugin may consume: the declared-settings handle (settings
+ * rework), whose `get()` returns this plugin's own
+ * `settings/<slug>.json` with defaults applied and malformed values
+ * repaired. Declared here — structurally, like the bridge's pi-ai
+ * re-declarations — because the plugin cannot import sigrun core; the two
+ * FUNCTION SHAPES it references are the host's own published declaration
+ * types (`@sigrun/sigrun/extension` is type-only, so nothing of core is
+ * bundled or loaded at runtime). The read is async-only, which is why the
  * loader awaits factory results.
  */
 export interface SigrunPluginHost {
-    readonly stores: {
-        /** This plugin's own `settings/<slug>.json`; absent file → `{}`. */
-        readonly settings: {
-            get(): Promise<Record<string, unknown>>;
-            set(value: Record<string, unknown>): Promise<void>;
-        };
+    readonly settings: {
+        declare<S = Record<string, unknown>, U = Record<string, unknown>>(declaration: SettingsDeclaration): DeclaredSettings<S, U>;
     };
 }
 /** Sigrun's three-state per-provider readiness vocabulary (Task 6). */
@@ -90,22 +97,21 @@ export interface OllamaPlugin {
  */
 export declare function createOllamaPlugin(baseUrl?: string): OllamaPlugin;
 /**
- * Resolve the plugin's base URL from its scoped settings: `baseUrl`
- * (string) overrides the {@link OLLAMA_BASE_URL} constant. Absent → the
- * constant; present-but-not-a-non-empty-string → throw (a malformed
- * override must quarantine loudly, not silently fall back to a possibly
- * wrong constant).
- */
-export declare function resolveOllamaBaseUrl(settings: Record<string, unknown>): string;
-/**
  * The sigrun extension-package factory (provider-only contributor).
  * Arity 1 declares the host-taking signature — sigrun's loader passes the
  * seam host only to factories that declare one (`factory.length > 0`) —
- * and the factory is ASYNC because the scoped settings store is
- * async-only; sigrun's loader awaits factory results. The base URL is
- * deployment-configurable through the scoped settings (`baseUrl` in
- * `settings/provider-ollama.json`, constant fallback): deployments behind a
- * proxy or mirror — and hermetic test fixtures — redirect the endpoint
- * that way (restart-required, exactly like sigrun-pareto/sigrun-bifrost).
+ * and the factory is ASYNC because the declared-settings read is
+ * async-only; sigrun's loader awaits factory results.
+ *
+ * Settings are DECLARED first (`src/settings-schema.ts` — core owns the
+ * page, the defaults and the malformed-value repair) and read ONCE, then
+ * baked into the provider: the base URL is factory-time, so the property is
+ * `restart`. An absent `baseUrl` — and one core REPAIRED to the key's
+ * default, the posture change from the deleted resolver's throw — reads back
+ * as the cloud endpoint the schema declares. The declared name and this
+ * package's name are the same string (`provider-ollama`), so the loader's
+ * provisional slug IS the final slug and the factory-time read resolves
+ * `settings/provider-ollama.json`, the file deployments behind a proxy or
+ * mirror (and hermetic test fixtures) redirect the endpoint with.
  */
 export default function sigrunOllama(host: SigrunPluginHost): Promise<ProviderPluginResult>;
