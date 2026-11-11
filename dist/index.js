@@ -241,6 +241,7 @@ export default async function sigrunOllama(host) {
     const plugin = createOllamaPlugin(settings.baseUrl);
     return {
         name: "provider-ollama",
+        title: "Ollama",
         providers: [{ provider: plugin.provider, readiness: plugin.readiness }],
         health: plugin.health,
     };
