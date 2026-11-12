@@ -39,6 +39,13 @@ describe("ollama settings schema", () => {
 		assertDrawable(OLLAMA_SETTINGS_SCHEMA);
 	});
 
+	it("factory declares its title", async () => {
+		const { result } = await declared();
+		expect(result.title).toBe("Ollama");
+		// The identity is unchanged: the display title never becomes the slug.
+		expect(result.name).toBe("provider-ollama");
+	});
+
 	it("defaults match the old parser", async () => {
 		// The deleted resolver returned OLLAMA_BASE_URL for an absent key and
 		// for a document with no usable one. The schema states that same

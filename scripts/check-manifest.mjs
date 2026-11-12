@@ -90,7 +90,7 @@ const DEV_PIN_OVERRIDES = {
  * the published one, while the peer floor stays a floor.
  */
 const CORE_MODULE = "@sigrun/sigrun";
-const CORE_PEER = ">=0.13.0";
+const CORE_PEER = ">=0.15.0";
 const CORE_DEV = "0.13.0";
 
 const peers = manifest.peerDependencies ?? {};
